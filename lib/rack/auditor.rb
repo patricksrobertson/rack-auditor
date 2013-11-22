@@ -2,13 +2,19 @@ require 'httparty'
 
 module Rack
   class Auditor
-    ROOT_URL = 'http://icis-identity-example.herokuapp.com/api/v1/verify.json'
-
-    def initialize(app, root_uri = 'http://snowflake.dev/')
-      @app, @root_uri = app, root_uri
+    def initialize(app, options = {})
+      @app      = app
+      @root_uri = options[:root_uri] || 'http://snowflake.dev/'
+      @dev_mode = options[:dev_mode] || false
     end
 
     def call(env)
+      audit(env) unless @dev_mode
+
+      @app.call(env)
+    end
+
+    def audit(env)
       key    = env['HTTP_X_API_KEY']
       secret = env['HTTP_X_API_SECRET']
 
@@ -28,8 +34,6 @@ module Rack
       when 504
         error_code(504, 'System Down')
       end
-
-      @app.call(env)
     end
 
     private
