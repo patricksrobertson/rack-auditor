@@ -13,6 +13,8 @@ module Rack
         key    = env['HTTP_X_API_KEY']
         secret = env['HTTP_X_API_SECRET']
 
+        raise "key #{key} secret #{secret}"
+
         return forbidden unless key && secret
 
         response = HTTParty.get "#{@root_uri}?api_key=#{key}&api_secret=#{secret}"
