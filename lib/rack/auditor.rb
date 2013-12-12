@@ -13,7 +13,7 @@ module Rack
         key    = env['HTTP_X_API_KEY']
         secret = env['HTTP_X_API_SECRET']
 
-        raise "key #{key} secret #{secret}"
+        raise "env #{env}"
 
         return forbidden unless key && secret
 
