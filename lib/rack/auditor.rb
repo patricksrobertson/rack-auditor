@@ -55,8 +55,8 @@ module Rack
     def inappropriate_request(env)
       return false if @api_prefix == ''
 
-      namespace = env['REQUEST_URI'].split('/')[0]
-      return false if namespace == @api_prefix
+      uri = env['REQUEST_URI']
+      return false if uri.match(@api_prefix)
 
       true
     end
