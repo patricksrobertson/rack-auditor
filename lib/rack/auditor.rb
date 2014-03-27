@@ -3,19 +3,28 @@ require 'httparty'
 module Rack
   class Auditor
     def initialize(app, options = {})
-      @app      = app
-      @root_uri = options[:root_uri] || 'http://snowflake.dev/'
-      @dev_mode = options[:dev_mode] || false
+      @app        = app
+      @root_uri   = options[:root_uri] || 'http://snowflake.dev/'
+      @dev_mode   = options[:dev_mode] || false
+      @api_prefix = options[:api_prefix] || ''
+      @access_method = options[:access_method] || :key #key or token
     end
 
     def call(env)
-      unless @dev_mode
-        key    = env['HTTP_X_API_KEY']
-        secret = env['HTTP_X_API_SECRET']
+      unless @dev_mode && inappropriate_request(env)
+        case @access_method
+        when :key
+          key    = env['HTTP_X_API_KEY']
+          secret = env['HTTP_X_API_SECRET']
 
-        return forbidden unless key && secret
+          return forbidden unless key && secret
+          response = HTTParty.get "#{@root_uri}?api_key=#{key}&api_secret=#{secret}"
+        when :token
+          token  = env['HTTP_X_ACCESS_TOKEN']
 
-        response = HTTParty.get "#{@root_uri}?api_key=#{key}&api_secret=#{secret}"
+          return forbidden unless token
+          response = HTTParty.get "#{@root_uri}?acess_token=#{token}"
+        end
 
         case response.code
         when 403
@@ -41,6 +50,15 @@ module Rack
 
     def error_code(code, message)
       [code, {'Content-Type' => 'text/plain'}, [message]]
+    end
+
+    def inappropriate_request(env)
+      return false if @api_prefix == ''
+
+      namespace = env['REQUEST_URI'].split('/')[0]
+      return false if namespace == @api_prefix
+
+      true
     end
   end
 end
