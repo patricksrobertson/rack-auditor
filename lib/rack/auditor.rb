@@ -11,7 +11,7 @@ module Rack
     end
 
     def call(env)
-      unless @dev_mode && inappropriate_request(env)
+      unless @dev_mode || inappropriate_request(env)
         case @access_method
         when :key
           key    = env['HTTP_X_API_KEY']
